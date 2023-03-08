@@ -467,12 +467,19 @@ func (s *Driver) checkForGapInUnsafeQueue(ctx context.Context) {
 	size := end - start
 
 	// If there is a gap in the queue and a backup sync client is configured, attempt to retrieve the missing payloads from the backup RPC
-	if size > 0 && s.L2SyncCl != nil {
-		// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
-		// Concurrent requests are safe here due to the engine queue being a priority queue.
-		// TODO: Should enforce a max gap size to prevent spamming the backup RPC or being rate limited.
-		for blockNumber := start; blockNumber < end; blockNumber++ {
-			s.L2SyncCl.FetchUnsafeBlock <- blockNumber
+	if size > 0 {
+		s.log.Warn("Unsafe queue gap detected", "start", start, "end", end, "size", size)
+		if s.L2SyncCl != nil {
+			s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
+
+			// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
+			// Concurrent requests are safe here due to the engine queue being a priority queue.
+			// TODO: Should enforce a max gap size to prevent spamming the backup RPC or being rate limited.
+			for blockNumber := start; blockNumber < end; blockNumber++ {
+				s.L2SyncCl.FetchUnsafeBlock <- blockNumber
+			}
+		} else {
+			s.log.Warn("No backup unsafe sync RPC configured, cannot fetch missing payloads!")
 		}
 	}
 }
