@@ -201,10 +201,11 @@ func (s *Driver) eventLoop() {
 		sequencerTimer.Reset(delay)
 	}
 
-	// Create a ticker to check if there is a gap in the engine queue every minute
+	// Create a ticker to check if there is a gap in the engine queue every 15 seconds
 	// If there is, we send requests to the backup RPC to retrieve the missing payloads
 	// and add them to the unsafe queue.
-	altSyncTicker := time.NewTicker(60 * time.Second)
+	altSyncTicker := time.NewTicker(15 * time.Second)
+	defer altSyncTicker.Stop()
 
 	for {
 		// If we are sequencing, and the L1 state is ready, update the trigger for the next sequencer action.
@@ -234,11 +235,12 @@ func (s *Driver) eventLoop() {
 				}
 			}
 			planSequencerAction() // schedule the next sequencer action to keep the sequencing looping
-		// TODO: Should this be lower-priority in the switch case?
 		case <-altSyncTicker.C:
 			// Check if there is a gap in the current unsafe payload queue. If there is, attempt to fetch
 			// missing payloads from the backup RPC (if it is configured).
-			s.checkForGapInUnsafeQueue(ctx)
+			if s.L2SyncCl != nil {
+				s.checkForGapInUnsafeQueue(ctx)
+			}
 		case payload := <-s.UnsafeL2Payloads:
 			s.snapshot("New unsafe payload")
 			s.log.Info("Optimistically queueing unsafe L2 execution payload", "id", payload.ID())
@@ -467,19 +469,16 @@ func (s *Driver) checkForGapInUnsafeQueue(ctx context.Context) {
 	size := end - start
 
 	// If there is a gap in the queue and a backup sync client is configured, attempt to retrieve the missing payloads from the backup RPC
+	// The size check here is purely to gate the logs and prevent spam to stdout.
 	if size > 0 {
 		s.log.Warn("Unsafe queue gap detected", "start", start, "end", end, "size", size)
-		if s.L2SyncCl != nil {
-			s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
+		s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
 
-			// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
-			// Concurrent requests are safe here due to the engine queue being a priority queue.
-			// TODO: Should enforce a max gap size to prevent spamming the backup RPC or being rate limited.
-			for blockNumber := start; blockNumber < end; blockNumber++ {
-				s.L2SyncCl.FetchUnsafeBlock <- blockNumber
-			}
-		} else {
-			s.log.Warn("No backup unsafe sync RPC configured, cannot fetch missing payloads!")
+		// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
+		// Concurrent requests are safe here due to the engine queue being a priority queue.
+		// TODO: Should enforce a max gap size to prevent spamming the backup RPC or being rate limited.
+		for blockNumber := start; blockNumber < end; blockNumber++ {
+			s.L2SyncCl.FetchUnsafeBlock <- blockNumber
 		}
 	}
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+var ErrNoUnsafeL2PayloadChannel = errors.New("unsafeL2Payloads channel must not be nil")
+
 type SyncClientInterface interface {
 	Start(unsafeL2Payloads chan *eth.ExecutionPayload) error
 	Close() error
@@ -55,7 +57,7 @@ func NewSyncClient(client client.RPC, log log.Logger, metrics caching.Metrics, c
 // The loop will have been started if err is not nil.
 func (s *SyncClient) Start(unsafeL2Payloads chan *eth.ExecutionPayload) error {
 	if unsafeL2Payloads == nil {
-		return errors.New("unsafeL2Payloads channel must not be nil")
+		return ErrNoUnsafeL2PayloadChannel
 	}
 	s.unsafeL2Payloads = unsafeL2Payloads
 
@@ -88,11 +90,11 @@ func (s *SyncClient) eventLoop() {
 
 // fetchUnsafeBlockFromRpc attempts to fetch an unsafe execution payload from the backup unsafe sync RPC.
 // WARNING: This function fails silently (aside from warning logs).
+//
+// Post Shanghai hardfork, the engine API's `PayloadBodiesByRange` method will be much more efficient, but for now,
+// the `eth_getBlockByNumber` method is more widely available.
 func (s *SyncClient) fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber uint64) {
 	s.log.Info("requesting unsafe payload from backup RPC", "block number", blockNumber)
-
-	// TODO: Post Shanghai hardfork, the engine API's `PayloadBodiesByRange` method will be much more efficient, but for now,
-	// the `eth_getBlockByNumber` method is more widely available.
 
 	payload, err := s.PayloadByNumber(ctx, blockNumber)
 	if err != nil {
