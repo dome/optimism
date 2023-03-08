@@ -48,7 +48,7 @@ func NewSyncClient(client client.RPC, log log.Logger, metrics caching.Metrics, c
 
 	return &SyncClient{
 		L2Client:         l2Client,
-		FetchUnsafeBlock: make(chan uint64),
+		FetchUnsafeBlock: make(chan uint64, 128),
 		done:             make(chan struct{}),
 	}, nil
 }

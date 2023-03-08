@@ -471,12 +471,16 @@ func (s *Driver) checkForGapInUnsafeQueue(ctx context.Context) {
 	// If there is a gap in the queue and a backup sync client is configured, attempt to retrieve the missing payloads from the backup RPC
 	// The size check here is purely to gate the logs and prevent spam to stdout.
 	if size > 0 {
-		s.log.Warn("Unsafe queue gap detected", "start", start, "end", end, "size", size)
-		s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
+		s.log.Warn("Gap in payload queue tip and unsafe head detected", "start", start, "end", end, "size", size)
+		// TODO: Should the max gap size that can be synced from the backup RPC be configurable?
+		if size <= 128 {
+			s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
+		} else {
+			s.log.Warn("Gap in payload queue tip and unsafe head too large. Skipping fetch from backup RPC", "start", start, "end", end, "size", size, "max", "128")
+		}
 
 		// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
 		// Concurrent requests are safe here due to the engine queue being a priority queue.
-		// TODO: Should enforce a max gap size to prevent spamming the backup RPC or being rate limited.
 		for blockNumber := start; blockNumber < end; blockNumber++ {
 			s.L2SyncCl.FetchUnsafeBlock <- blockNumber
 		}
