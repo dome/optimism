@@ -264,6 +264,26 @@ func deployL1Contracts(config *DeployConfig, backend *backends.SimulatedBackend)
 	if gasLimit == 0 {
 		gasLimit = defaultL2GasLimit
 	}
+
+	// Deploy the OptimismPortal because the SystemConfig depends on it's
+	// code in its constructor
+	deployment, err := deployer.Deploy(backend, []deployer.Constructor{
+		{
+			// The implementation of the OptimismPortal is deployed
+			// as being paused to prevent invalid usage of the network
+			// as only the proxy should be used
+			Name: "OptimismPortal",
+			Args: []interface{}{
+				predeploys.DevL2OutputOracleAddr,
+				config.FinalSystemOwner,
+				true, // _paused
+			},
+		},
+	}, l1Deployer)
+	if err != nil {
+		return nil, err
+	}
+
 	constructors = append(constructors, []deployer.Constructor{
 		{
 			Name: "SystemConfig",
@@ -274,7 +294,7 @@ func deployL1Contracts(config *DeployConfig, backend *backends.SimulatedBackend)
 				config.BatchSenderAddress.Hash(), // left-padded 32 bytes value, version is zero anyway
 				gasLimit,
 				config.P2PSequencerAddress,
-				predeploys.DevOptimismPortalAddr,
+				deployment[0].Address,
 			},
 		},
 		{
@@ -287,17 +307,6 @@ func deployL1Contracts(config *DeployConfig, backend *backends.SimulatedBackend)
 				config.L2OutputOracleProposer,
 				config.L2OutputOracleChallenger,
 				uint642Big(config.FinalizationPeriodSeconds),
-			},
-		},
-		{
-			// The implementation of the OptimismPortal is deployed
-			// as being paused to prevent invalid usage of the network
-			// as only the proxy should be used
-			Name: "OptimismPortal",
-			Args: []interface{}{
-				predeploys.DevL2OutputOracleAddr,
-				config.FinalSystemOwner,
-				true, // _paused
 			},
 		},
 		{
@@ -325,7 +334,15 @@ func deployL1Contracts(config *DeployConfig, backend *backends.SimulatedBackend)
 			Name: "WETH9",
 		},
 	}...)
-	return deployer.Deploy(backend, constructors, l1Deployer)
+
+	deployments, err := deployer.Deploy(backend, constructors, l1Deployer)
+	if err != nil {
+		return nil, err
+	}
+
+	deployments = append(deployments, deployment...)
+
+	return deployments, nil
 }
 
 func l1Deployer(backend *backends.SimulatedBackend, opts *bind.TransactOpts, deployment deployer.Constructor) (*types.Transaction, error) {
