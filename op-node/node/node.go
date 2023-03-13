@@ -200,7 +200,9 @@ func (n *OpNode) initL2(ctx context.Context, cfg *Config, snapshotLog log.Logger
 	var syncClient *sources.SyncClient
 	// If the L2 sync config is present, use it to create a sync client
 	if cfg.L2Sync != nil {
-		if err := cfg.L2Sync.Check(); err == nil {
+		if err := cfg.L2Sync.Check(); err != nil {
+			return fmt.Errorf("invalid L2 sync config: %w", err)
+		} else {
 			rpcSyncClient, err := cfg.L2Sync.Setup(ctx, n.log)
 			if err != nil {
 				return fmt.Errorf("failed to setup L2 execution-engine RPC client for backup sync: %w", err)

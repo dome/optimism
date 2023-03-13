@@ -82,7 +82,7 @@ func (p *PreparedL2Endpoints) Setup(ctx context.Context, log log.Logger) (client
 
 // L2SyncEndpointConfig contains configuration for the fallback sync endpoint
 type L2SyncEndpointConfig struct {
-	// HTTP Address of the L2 RPC to use for backup sync
+	// Address of the L2 RPC to use for backup sync
 	L2NodeAddr string
 }
 

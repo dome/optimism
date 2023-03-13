@@ -465,24 +465,31 @@ type hashAndErrorChannel struct {
 // WARNING: The sync client's attempt to retrieve the missing payloads is not guaranteed to succeed, and it will fail silently (besides
 // emitting warning logs) if the requests fail.
 func (s *Driver) checkForGapInUnsafeQueue(ctx context.Context) {
-	start, end := s.derivation.GetUnsafeQueueGap()
+	// subtract genesis time from wall clock to get the time elapsed since genesis, and then divide that
+	// difference by the block time to get the expected L2 block number at the current time. If the
+	// unsafe head does not have this block number, then there is a gap in the queue.
+	wallClock := uint64(time.Now().Unix())
+	genesisTimestamp := s.config.Genesis.L2Time
+	wallClockGenesisDiff := wallClock - genesisTimestamp
+	expectedL2Block := wallClockGenesisDiff / s.config.BlockTime
+
+	start, end := s.derivation.GetUnsafeQueueGap(expectedL2Block)
 	size := end - start
 
-	// If there is a gap in the queue and a backup sync client is configured, attempt to retrieve the missing payloads from the backup RPC
-	// The size check here is purely to gate the logs and prevent spam to stdout.
+	// Check if there is a gap between the unsafe head and the expected L2 block number at the current time.
 	if size > 0 {
-		s.log.Warn("Gap in payload queue tip and unsafe head detected", "start", start, "end", end, "size", size)
-		// TODO: Should the max gap size that can be synced from the backup RPC be configurable?
-		if size <= 128 {
-			s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
-		} else {
-			s.log.Warn("Gap in payload queue tip and unsafe head too large. Skipping fetch from backup RPC", "start", start, "end", end, "size", size, "max", "128")
-		}
+		s.log.Warn("Gap in payload queue tip and expected unsafe chain detected", "start", start, "end", end, "size", size)
+		s.log.Info("Attempting to fetch missing payloads from backup RPC", "start", start, "end", end, "size", size)
 
 		// Attempt to fetch the missing payloads from the backup unsafe sync RPC concurrently.
 		// Concurrent requests are safe here due to the engine queue being a priority queue.
-		for blockNumber := start; blockNumber < end; blockNumber++ {
-			s.L2SyncCl.FetchUnsafeBlock <- blockNumber
+		for blockNumber := start; blockNumber <= end; blockNumber++ {
+			select {
+			case s.L2SyncCl.FetchUnsafeBlock <- blockNumber:
+				// Do nothing- the block number was successfully sent into the channel
+			default:
+				return // If the channel is full, return and wait for the next iteration of the event loop
+			}
 		}
 	}
 }

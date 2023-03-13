@@ -131,8 +131,9 @@ func NewEngineQueue(log log.Logger, cfg *rollup.Config, engine Engine, metrics M
 		metrics:      metrics,
 		finalityData: make([]FinalityData, 0, finalityLookback),
 		unsafePayloads: PayloadsQueue{
-			MaxSize: maxUnsafePayloadsMemory,
-			SizeFn:  payloadMemSize,
+			MaxSize:  maxUnsafePayloadsMemory,
+			SizeFn:   payloadMemSize,
+			blockNos: make(map[uint64]bool),
 		},
 		prev:      prev,
 		l1Fetcher: l1Fetcher,
@@ -663,18 +664,24 @@ func (eq *EngineQueue) Reset(ctx context.Context, _ eth.L1BlockRef, _ eth.System
 	return io.EOF
 }
 
-// GetUnsafeQueueGap retrieves the current [start, end) range of the gap between the tip of the unsafe priority queue and the unsafe head.
+// GetUnsafeQueueGap retrieves the current [start, end] range of the gap between the tip of the unsafe priority queue and the unsafe head.
 // If there is no gap, the start and end will be 0.
-func (eq *EngineQueue) GetUnsafeQueueGap() (start uint64, end uint64) {
-	// If the parent hash of the first unsafe payload does not match the current unsafe head, then there is a gap.
-	if first := eq.unsafePayloads.Peek(); first != nil && first.ParentHash != eq.unsafeHead.Hash {
+func (eq *EngineQueue) GetUnsafeQueueGap(expectedNumber uint64) (start uint64, end uint64) {
+	// If the priority queue isn't empty, check the difference between the first unsafe payload's block number in the queue and the expected block number.
+	// If the priority queue is empty, check the difference between the unsafe head and the expected block number.
+	// Otherwise, there is no gap.
+	if first := eq.unsafePayloads.Peek(); first != nil && first.ID().Number != expectedNumber {
+		// The gap starts at the tip of the unsafe priority queue + 1
+		start = first.ID().Number + 1
+		end = expectedNumber
+	} else if eq.unsafeHead.Number != expectedNumber {
 		// The gap starts at the unsafe head + 1
 		start = eq.unsafeHead.Number + 1
-		// The gap ends at the parent block of the first unsafe payload in the priority queue, but we return the exclusive bound.
-		end = first.ID().Number
-
-		return start, end
+		end = expectedNumber
 	} else {
-		return 0, 0
+		// Return a gap of size 0
+		start = 0
+		end = 0
 	}
+	return start, end
 }
