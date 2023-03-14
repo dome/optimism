@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	"github.com/ethereum-optimism/optimism/op-node/sources/caching"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 var ErrNoUnsafeL2PayloadChannel = errors.New("unsafeL2Payloads channel must not be nil")
@@ -75,7 +75,7 @@ func (s *SyncClient) Close() error {
 // eventLoop is the main event loop for the sync client.
 func (s *SyncClient) eventLoop() {
 	defer s.wg.Done()
-	s.log.Info("starting sync client event loop")
+	s.log.Info("Starting sync client event loop")
 
 	for {
 		select {
@@ -93,25 +93,28 @@ func (s *SyncClient) eventLoop() {
 // Post Shanghai hardfork, the engine API's `PayloadBodiesByRange` method will be much more efficient, but for now,
 // the `eth_getBlockByNumber` method is more widely available.
 func (s *SyncClient) fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber uint64) {
-	s.log.Info("requesting unsafe payload from backup RPC", "block number", blockNumber)
+	s.log.Info("Requesting unsafe payload from backup RPC", "block number", blockNumber)
 
 	payload, err := s.PayloadByNumber(ctx, blockNumber)
 	if err != nil {
-		s.log.Warn("failed to convert block to execution payload", "block number", blockNumber, "err", err)
+		s.log.Warn("Failed to convert block to execution payload", "block number", blockNumber, "err", err)
 		return
 	}
 
 	// TODO: Validate the integrity of the payload. Is this required?
 	// Signature validation is not necessary here since the backup RPC is trusted.
 	if _, ok := payload.CheckBlockHash(); !ok {
-		s.log.Warn("received invalid payload from backup RPC; invalid block hash", "payload", payload.ID())
+		s.log.Warn("Received invalid payload from backup RPC; invalid block hash", "payload", payload.ID())
 		return
 	}
 
-	s.log.Info("received unsafe payload from backup RPC", "payload", payload.ID())
+	s.log.Info("Received unsafe payload from backup RPC", "payload", payload.ID())
 
 	// Send the retrieved payload to the `unsafeL2Payloads` channel.
-	s.receivePayload(ctx, "ALT_RPC_SYNC", payload)
-
-	s.log.Info("sent received payload into the driver's unsafeL2Payloads channel", "payload", payload.ID())
+	if err = s.receivePayload(ctx, "ALT_RPC_SYNC", payload); err != nil {
+		s.log.Warn("Failed to send payload into the driver's unsafeL2Payloads channel", "payload", payload.ID(), "err", err)
+		return
+	} else {
+		s.log.Info("Sent received payload into the driver's unsafeL2Payloads channel", "payload", payload.ID())
+	}
 }
