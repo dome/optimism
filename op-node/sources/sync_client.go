@@ -10,12 +10,15 @@ import (
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	"github.com/ethereum-optimism/optimism/op-node/sources/caching"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 var ErrNoUnsafeL2PayloadChannel = errors.New("unsafeL2Payloads channel must not be nil")
 
+type receivePayload = func(ctx context.Context, from peer.ID, payload *eth.ExecutionPayload) error
+
 type SyncClientInterface interface {
-	Start(unsafeL2Payloads chan *eth.ExecutionPayload) error
+	Start() error
 	Close() error
 	fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber uint64)
 }
@@ -24,7 +27,7 @@ type SyncClient struct {
 	*L2Client
 	FetchUnsafeBlock chan uint64
 	done             chan struct{}
-	unsafeL2Payloads chan *eth.ExecutionPayload
+	receivePayload   receivePayload
 	wg               sync.WaitGroup
 }
 
@@ -40,7 +43,7 @@ func SyncClientDefaultConfig(config *rollup.Config, trustRPC bool) *SyncClientCo
 	}
 }
 
-func NewSyncClient(client client.RPC, log log.Logger, metrics caching.Metrics, config *SyncClientConfig) (*SyncClient, error) {
+func NewSyncClient(receiver receivePayload, client client.RPC, log log.Logger, metrics caching.Metrics, config *SyncClientConfig) (*SyncClient, error) {
 	l2Client, err := NewL2Client(client, log, metrics, &config.L2ClientConfig)
 	if err != nil {
 		return nil, err
@@ -50,17 +53,13 @@ func NewSyncClient(client client.RPC, log log.Logger, metrics caching.Metrics, c
 		L2Client:         l2Client,
 		FetchUnsafeBlock: make(chan uint64, 128),
 		done:             make(chan struct{}),
+		receivePayload:   receiver,
 	}, nil
 }
 
 // Start starts up the state loop.
 // The loop will have been started if err is not nil.
-func (s *SyncClient) Start(unsafeL2Payloads chan *eth.ExecutionPayload) error {
-	if unsafeL2Payloads == nil {
-		return ErrNoUnsafeL2PayloadChannel
-	}
-	s.unsafeL2Payloads = unsafeL2Payloads
-
+func (s *SyncClient) Start() error {
 	s.wg.Add(1)
 	go s.eventLoop()
 	return nil
@@ -112,7 +111,7 @@ func (s *SyncClient) fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber ui
 	s.log.Info("received unsafe payload from backup RPC", "payload", payload.ID())
 
 	// Send the retrieved payload to the `unsafeL2Payloads` channel.
-	s.unsafeL2Payloads <- payload
+	s.receivePayload(ctx, "ALT_RPC_SYNC", payload)
 
 	s.log.Info("sent received payload into the driver's unsafeL2Payloads channel", "payload", payload.ID())
 }

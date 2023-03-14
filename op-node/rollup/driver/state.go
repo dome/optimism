@@ -69,8 +69,7 @@ type Driver struct {
 
 	// L2 Signals:
 
-	// Note: `UnsafeL2Payloads` is exposed so that the SyncClient can send payloads to the driver if it is enabled.
-	UnsafeL2Payloads chan *eth.ExecutionPayload
+	unsafeL2Payloads chan *eth.ExecutionPayload
 
 	l1        L1Chain
 	l2        L2Chain
@@ -137,7 +136,7 @@ func (s *Driver) OnUnsafeL2Payload(ctx context.Context, payload *eth.ExecutionPa
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case s.UnsafeL2Payloads <- payload:
+	case s.unsafeL2Payloads <- payload:
 		return nil
 	}
 }
@@ -241,7 +240,7 @@ func (s *Driver) eventLoop() {
 			if s.L2SyncCl != nil {
 				s.checkForGapInUnsafeQueue(ctx)
 			}
-		case payload := <-s.UnsafeL2Payloads:
+		case payload := <-s.unsafeL2Payloads:
 			s.snapshot("New unsafe payload")
 			s.log.Info("Optimistically queueing unsafe L2 execution payload", "id", payload.ID())
 			s.derivation.AddUnsafePayload(payload)

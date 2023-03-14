@@ -211,7 +211,7 @@ func (n *OpNode) initL2(ctx context.Context, cfg *Config, snapshotLog log.Logger
 			// The sync client's RPC is always trusted
 			config := sources.SyncClientDefaultConfig(&cfg.Rollup, true)
 
-			syncClient, err = sources.NewSyncClient(rpcSyncClient, n.log, n.metrics.L2SourceCache, config)
+			syncClient, err = sources.NewSyncClient(n.OnUnsafeL2Payload, rpcSyncClient, n.log, n.metrics.L2SourceCache, config)
 			if err != nil {
 				return fmt.Errorf("failed to create sync client: %w", err)
 			}
@@ -293,7 +293,7 @@ func (n *OpNode) Start(ctx context.Context) error {
 
 	// If the backup unsafe sync client is enabled, start its event loop
 	if n.l2Driver.L2SyncCl != nil {
-		if err := n.l2Driver.L2SyncCl.Start(n.l2Driver.UnsafeL2Payloads); err != nil {
+		if err := n.l2Driver.L2SyncCl.Start(); err != nil {
 			n.log.Error("Could not start the backup sync client", "err", err)
 			return err
 		}

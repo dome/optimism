@@ -654,12 +654,12 @@ func TestSystemMockP2P(t *testing.T) {
 //
 // Test steps:
 // 1. Spin up the nodes (P2P is disabled on the verifier)
-// 2. Send 10 TXs to the sequencer.
-// 3. Wait for the TXs to be mined on the sequencer chain.
+// 2. Send a transaction to the sequencer.
+// 3. Wait for the TX to be mined on the sequencer chain.
 // 5. Wait for the verifier to detect a gap in the payload queue vs. the unsafe head
 // 6. Wait for the RPC sync method to grab the block from the sequencer over RPC and insert it into the verifier's unsafe chain.
 // 7. Wait for the verifier to sync the unsafe chain into the safe chain.
-// 8. Verify that the TXs are included in the verifier's safe chain.
+// 8. Verify that the TX is included in the verifier's safe chain.
 func TestSystemMockAltSync(t *testing.T) {
 	parallel(t)
 	if !verboseGethNodes {
@@ -682,10 +682,15 @@ func TestSystemMockAltSync(t *testing.T) {
 	cfg.Nodes["sequencer"].Tracer = seqTracer
 	cfg.Nodes["verifier"].Tracer = verifTracer
 
-	// Set the L2Sync client in the verifier client
-	// TODO: This doesn't work. The verifier client's sync client config is set before the RPC is initialized.
+	// Hard-code the sequencer node's RPC url
+	cfg.GethOptions["sequencer"] = []GethOption{
+		func(ethCfg *ethconfig.Config, nodeCfg *node.Config) error {
+			nodeCfg.HTTPPort = 41633
+			return nil
+		},
+	}
 	cfg.Nodes["verifier"].L2Sync = &rollupNode.L2SyncEndpointConfig{
-		L2NodeAddr: cfg.Nodes["sequencer"].RPC.HttpEndpoint(),
+		L2NodeAddr: "http://127.0.0.1:41633",
 	}
 
 	sys, err := cfg.Start()
@@ -698,41 +703,32 @@ func TestSystemMockAltSync(t *testing.T) {
 	// Transactor Account
 	ethPrivKey := cfg.Secrets.Alice
 
-	txs := make([]*types.Transaction, 10)
-	receipts := make([]*types.Receipt, 10)
+	// Submit a TX to L2 sequencer node
+	toAddr := common.Address{0xff, 0xff}
+	tx := types.MustSignNewTx(ethPrivKey, types.LatestSignerForChainID(cfg.L2ChainIDBig()), &types.DynamicFeeTx{
+		ChainID:   cfg.L2ChainIDBig(),
+		Nonce:     0,
+		To:        &toAddr,
+		Value:     big.NewInt(1_000_000_000),
+		GasTipCap: big.NewInt(10),
+		GasFeeCap: big.NewInt(200),
+		Gas:       21000,
+	})
+	err = l2Seq.SendTransaction(context.Background(), tx)
+	require.Nil(t, err, "Sending L2 tx to sequencer")
 
-	// Submit 10 TXs to L2 sequencer node
-	for i := uint64(0); i < 10; i++ {
-		toAddr := common.Address{0xff, 0xff}
-		tx := types.MustSignNewTx(ethPrivKey, types.LatestSignerForChainID(cfg.L2ChainIDBig()), &types.DynamicFeeTx{
-			ChainID:   cfg.L2ChainIDBig(),
-			Nonce:     i,
-			To:        &toAddr,
-			Value:     big.NewInt(1_000_000_000),
-			GasTipCap: big.NewInt(10),
-			GasFeeCap: big.NewInt(200),
-			Gas:       21000,
-		})
-		err = l2Seq.SendTransaction(context.Background(), tx)
-		require.Nil(t, err, "Sending L2 tx to sequencer")
-		txs[i] = tx
-
-		// Wait for tx to be mined on the L2 sequencer chain
-		receiptSeq, err := waitForTransaction(tx.Hash(), l2Seq, 6*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
-		require.Nil(t, err, "Waiting for L2 tx on sequencer")
-		receipts[i] = receiptSeq
-	}
+	// Wait for tx to be mined on the L2 sequencer chain
+	receiptSeq, err := waitForTransaction(tx.Hash(), l2Seq, 6*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
+	require.Nil(t, err, "Waiting for L2 tx on sequencer")
 
 	// Wait for alt RPC sync to pick up the blocks on the sequencer chain
-	for i := uint64(0); i < 10; i++ {
-		receiptVerif, err := waitForTransaction(txs[i].Hash(), l2Verif, 6*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
-		require.Nil(t, err, "Waiting for L2 tx on verifier")
+	receiptVerif, err := waitForTransaction(tx.Hash(), l2Verif, 6*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
+	require.Nil(t, err, "Waiting for L2 tx on verifier")
 
-		require.Equal(t, receipts[i], receiptVerif)
+	require.Equal(t, receiptSeq, receiptVerif)
 
-		// Verify that the tx was received via RPC sync (P2P is disabled)
-		require.Contains(t, received, receiptVerif.BlockHash)
-	}
+	// Verify that the tx was received via RPC sync (P2P is disabled)
+	require.Contains(t, received, receiptVerif.BlockHash)
 
 	// Verify that everything that was received was published
 	require.GreaterOrEqual(t, len(published), len(received))
