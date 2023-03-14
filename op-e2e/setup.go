@@ -225,13 +225,43 @@ func (sys *System) Close() {
 	sys.Mocknet.Close()
 }
 
+type systemConfigHook func(sCfg *SystemConfig, s *System)
+
 type SystemConfigOption struct {
 	key    string
 	role   string
-	action func(sCfg *SystemConfig, s *System)
+	action systemConfigHook
 }
 
-func (cfg SystemConfig) Start(opts ...SystemConfigOption) (*System, error) {
+type SystemConfigOptions struct {
+	opts map[string]systemConfigHook
+}
+
+func NewSystemConfigOptions(_opts []SystemConfigOption) (SystemConfigOptions, error) {
+	opts := make(map[string]systemConfigHook)
+	for _, opt := range _opts {
+		if _, ok := opts[opt.key+":"+opt.role]; ok {
+			return SystemConfigOptions{}, fmt.Errorf("duplicate option for key %s and role %s", opt.key, opt.role)
+		}
+		opts[opt.key+":"+opt.role] = opt.action
+	}
+
+	return SystemConfigOptions{
+		opts: opts,
+	}, nil
+}
+
+func (s *SystemConfigOptions) Get(key, role string) (systemConfigHook, bool) {
+	v, ok := s.opts[key+":"+role]
+	return v, ok
+}
+
+func (cfg SystemConfig) Start(_opts ...SystemConfigOption) (*System, error) {
+	opts, err := NewSystemConfigOptions(_opts)
+	if err != nil {
+		return nil, err
+	}
+
 	sys := &System{
 		cfg:         cfg,
 		Nodes:       make(map[string]*node.Node),
@@ -489,10 +519,8 @@ func (cfg SystemConfig) Start(opts ...SystemConfigOption) (*System, error) {
 		}
 		sys.RollupNodes[name] = node
 
-		for _, n := range opts {
-			if n.role == name && n.key == "afterRollupNodeStart" {
-				n.action(&cfg, sys)
-			}
+		if action, ok := opts.Get("afterRollupNodeStart", name); ok {
+			action(&cfg, sys)
 		}
 	}
 

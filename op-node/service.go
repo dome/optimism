@@ -131,9 +131,16 @@ func NewL2EndpointConfig(ctx *cli.Context, log log.Logger) (*node.L2EndpointConf
 	}, nil
 }
 
+// NewL2SyncEndpointConfig returns a pointer to a L2SyncEndpointConfig if the
+// flag is set, otherwise nil.
 func NewL2SyncEndpointConfig(ctx *cli.Context) *node.L2SyncEndpointConfig {
-	return &node.L2SyncEndpointConfig{
-		L2NodeAddr: ctx.GlobalString(flags.BackupL2UnsafeSyncRPC.Name),
+	addr := ctx.GlobalString(flags.BackupL2UnsafeSyncRPC.Name)
+	if addr == "" {
+		return nil
+	} else {
+		return &node.L2SyncEndpointConfig{
+			L2NodeAddr: addr,
+		}
 	}
 }
 

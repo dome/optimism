@@ -15,6 +15,9 @@ import (
 
 var ErrNoUnsafeL2PayloadChannel = errors.New("unsafeL2Payloads channel must not be nil")
 
+// RpcSyncPeer is a mock PeerID for the RPC sync client.
+var RpcSyncPeer peer.ID = "ALT_RPC_SYNC"
+
 type receivePayload = func(ctx context.Context, from peer.ID, payload *eth.ExecutionPayload) error
 
 type SyncClientInterface interface {
@@ -111,7 +114,7 @@ func (s *SyncClient) fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber ui
 	s.log.Info("Received unsafe payload from backup RPC", "payload", payload.ID())
 
 	// Send the retrieved payload to the `unsafeL2Payloads` channel.
-	if err = s.receivePayload(ctx, "ALT_RPC_SYNC", payload); err != nil {
+	if err = s.receivePayload(ctx, RpcSyncPeer, payload); err != nil {
 		s.log.Warn("Failed to send payload into the driver's unsafeL2Payloads channel", "payload", payload.ID(), "err", err)
 		return
 	} else {
