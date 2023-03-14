@@ -682,18 +682,15 @@ func TestSystemMockAltSync(t *testing.T) {
 	cfg.Nodes["sequencer"].Tracer = seqTracer
 	cfg.Nodes["verifier"].Tracer = verifTracer
 
-	// Hard-code the sequencer node's RPC url
-	cfg.GethOptions["sequencer"] = []GethOption{
-		func(ethCfg *ethconfig.Config, nodeCfg *node.Config) error {
-			nodeCfg.HTTPPort = 41633
-			return nil
+	sys, err := cfg.Start(SystemConfigOption{
+		key:  "afterRollupNodeStart",
+		role: "sequencer",
+		action: func(sCfg *SystemConfig, system *System) {
+			cfg.Nodes["verifier"].L2Sync = &rollupNode.L2SyncEndpointConfig{
+				L2NodeAddr: system.Nodes["sequencer"].HTTPEndpoint(),
+			}
 		},
-	}
-	cfg.Nodes["verifier"].L2Sync = &rollupNode.L2SyncEndpointConfig{
-		L2NodeAddr: "http://127.0.0.1:41633",
-	}
-
-	sys, err := cfg.Start()
+	})
 	require.Nil(t, err, "Error starting up system")
 	defer sys.Close()
 
