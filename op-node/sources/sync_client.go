@@ -104,7 +104,6 @@ func (s *SyncClient) fetchUnsafeBlockFromRpc(ctx context.Context, blockNumber ui
 		return
 	}
 
-	// TODO: Validate the integrity of the payload. Is this required?
 	// Signature validation is not necessary here since the backup RPC is trusted.
 	if _, ok := payload.CheckBlockHash(); !ok {
 		s.log.Warn("Received invalid payload from backup RPC; invalid block hash", "payload", payload.ID())

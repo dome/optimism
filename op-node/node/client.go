@@ -105,6 +105,25 @@ func (cfg *L2SyncEndpointConfig) Check() error {
 	return nil
 }
 
+type L2SyncRPCConfig struct {
+	// RPC endpoint to use for syncing
+	Rpc client.RPC
+}
+
+var _ L2SyncEndpointSetup = (*L2SyncRPCConfig)(nil)
+
+func (cfg *L2SyncRPCConfig) Setup(ctx context.Context, log log.Logger) (client.RPC, error) {
+	return cfg.Rpc, nil
+}
+
+func (cfg *L2SyncRPCConfig) Check() error {
+	if cfg.Rpc == nil {
+		return errors.New("rpc cannot be nil")
+	}
+
+	return nil
+}
+
 type L1EndpointConfig struct {
 	L1NodeAddr string // Address of L1 User JSON-RPC endpoint to use (eth namespace required)
 

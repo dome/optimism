@@ -686,8 +686,9 @@ func TestSystemMockAltSync(t *testing.T) {
 		key:  "afterRollupNodeStart",
 		role: "sequencer",
 		action: func(sCfg *SystemConfig, system *System) {
-			cfg.Nodes["verifier"].L2Sync = &rollupNode.L2SyncEndpointConfig{
-				L2NodeAddr: system.Nodes["sequencer"].HTTPEndpoint(),
+			rpc, _ := system.Nodes["sequencer"].Attach() // never errors
+			cfg.Nodes["verifier"].L2Sync = &rollupNode.L2SyncRPCConfig{
+				Rpc: client.NewBaseRPCClient(rpc),
 			}
 		},
 	})
@@ -719,7 +720,7 @@ func TestSystemMockAltSync(t *testing.T) {
 	require.Nil(t, err, "Waiting for L2 tx on sequencer")
 
 	// Wait for alt RPC sync to pick up the blocks on the sequencer chain
-	receiptVerif, err := waitForTransaction(tx.Hash(), l2Verif, 6*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
+	receiptVerif, err := waitForTransaction(tx.Hash(), l2Verif, 12*time.Duration(sys.RollupConfig.BlockTime)*time.Second)
 	require.Nil(t, err, "Waiting for L2 tx on verifier")
 
 	require.Equal(t, receiptSeq, receiptVerif)

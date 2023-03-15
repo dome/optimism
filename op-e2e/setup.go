@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -493,7 +494,17 @@ func (cfg SystemConfig) Start(_opts ...SystemConfigOption) (*System, error) {
 	snapLog.SetHandler(log.DiscardHandler())
 
 	// Rollup nodes
-	for name, nodeConfig := range cfg.Nodes {
+
+	// Ensure we are looping through the nodes in alphabetical order
+	ks := make([]string, 0, len(cfg.Nodes))
+	for k := range cfg.Nodes {
+		ks = append(ks, k)
+	}
+	// Sort strings in ascending alphabetical order
+	sort.Strings(ks)
+
+	for _, name := range ks {
+		nodeConfig := cfg.Nodes[name]
 		c := *nodeConfig // copy
 		c.Rollup = makeRollupConfig()
 
