@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-// Testing
 import { CommonBase } from "forge-std/Base.sol";
 
-// Libraries
-import "src/dispute/lib/Types.sol";
+import { FaultDisputeGame } from "src/dispute/FaultDisputeGame.sol";
+import { IFaultDisputeGame } from "src/dispute/interfaces/IFaultDisputeGame.sol";
 
-// Interfaces
-import { IFaultDisputeGame } from "interfaces/dispute/IFaultDisputeGame.sol";
+import "src/dispute/lib/Types.sol";
 
 /// @title GameSolver
 /// @notice The `GameSolver` contract is a contract that can produce an array of available
@@ -17,7 +15,7 @@ import { IFaultDisputeGame } from "interfaces/dispute/IFaultDisputeGame.sol";
 ///         it suggests.
 abstract contract GameSolver is CommonBase {
     /// @notice The `FaultDisputeGame` proxy that the `GameSolver` will be solving.
-    IFaultDisputeGame public immutable GAME;
+    FaultDisputeGame public immutable GAME;
     /// @notice The split depth of the game
     uint256 internal immutable SPLIT_DEPTH;
     /// @notice The max depth of the game
@@ -57,7 +55,7 @@ abstract contract GameSolver is CommonBase {
     }
 
     constructor(
-        IFaultDisputeGame _gameProxy,
+        FaultDisputeGame _gameProxy,
         uint256[] memory _l2Outputs,
         bytes memory _trace,
         bytes memory _preStateData
@@ -91,7 +89,7 @@ contract HonestGameSolver is GameSolver {
     }
 
     constructor(
-        IFaultDisputeGame _gameProxy,
+        FaultDisputeGame _gameProxy,
         uint256[] memory _l2Outputs,
         bytes memory _trace,
         bytes memory _preStateData
@@ -225,7 +223,7 @@ contract HonestGameSolver is GameSolver {
         move_ = Move({
             kind: isAttack ? MoveKind.Attack : MoveKind.Defend,
             value: bond,
-            data: abi.encodeCall(IFaultDisputeGame.move, (disputed, _challengeIndex, claimAt(_movePos), isAttack))
+            data: abi.encodeCall(FaultDisputeGame.move, (disputed, _challengeIndex, claimAt(_movePos), isAttack))
         });
     }
 
@@ -265,7 +263,7 @@ contract HonestGameSolver is GameSolver {
         move_ = Move({
             kind: MoveKind.Step,
             value: 0,
-            data: abi.encodeCall(IFaultDisputeGame.step, (_challengeIndex, isAttack, preStateTrace, hex""))
+            data: abi.encodeCall(FaultDisputeGame.step, (_challengeIndex, isAttack, preStateTrace, hex""))
         });
     }
 
@@ -368,10 +366,10 @@ abstract contract DisputeActor {
 ///         that this actor *can* be dishonest if the trace is faulty, but it will always follow
 ///         the rules of the honest actor.
 contract HonestDisputeActor is DisputeActor {
-    IFaultDisputeGame public immutable GAME;
+    FaultDisputeGame public immutable GAME;
 
     constructor(
-        IFaultDisputeGame _gameProxy,
+        FaultDisputeGame _gameProxy,
         uint256[] memory _l2Outputs,
         bytes memory _trace,
         bytes memory _preStateData

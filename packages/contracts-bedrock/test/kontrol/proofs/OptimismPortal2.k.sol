@@ -4,8 +4,11 @@ pragma solidity ^0.8.13;
 import { DeploymentSummaryFaultProofs } from "./utils/DeploymentSummaryFaultProofs.sol";
 import { KontrolUtils } from "./utils/KontrolUtils.sol";
 import { Types } from "src/libraries/Types.sol";
-import { IOptimismPortal2 as OptimismPortal } from "interfaces/L1/IOptimismPortal2.sol";
-import { ISuperchainConfig as SuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
+import {
+    IOptimismPortal as OptimismPortal,
+    ISuperchainConfig as SuperchainConfig
+} from "./interfaces/KontrolInterfaces.sol";
+import "src/libraries/PortalErrors.sol";
 
 contract OptimismPortal2Kontrol is DeploymentSummaryFaultProofs, KontrolUtils {
     OptimismPortal optimismPortal;
@@ -25,7 +28,7 @@ contract OptimismPortal2Kontrol is DeploymentSummaryFaultProofs, KontrolUtils {
         vm.prank(optimismPortal.guardian());
         superchainConfig.pause("identifier");
 
-        vm.expectRevert(OptimismPortal.OptimismPortal_CallPaused.selector);
+        vm.expectRevert(CallPaused.selector);
         optimismPortal.finalizeWithdrawalTransaction(_tx);
     }
 
@@ -46,7 +49,7 @@ contract OptimismPortal2Kontrol is DeploymentSummaryFaultProofs, KontrolUtils {
         vm.prank(optimismPortal.guardian());
         superchainConfig.pause("identifier");
 
-        vm.expectRevert(OptimismPortal.OptimismPortal_CallPaused.selector);
+        vm.expectRevert(CallPaused.selector);
         optimismPortal.proveWithdrawalTransaction(_tx, _l2OutputIndex, _outputRootProof, _withdrawalProof);
     }
 

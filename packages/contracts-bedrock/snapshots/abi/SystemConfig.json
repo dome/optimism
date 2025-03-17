@@ -19,6 +19,19 @@
   },
   {
     "inputs": [],
+    "name": "DISPUTE_GAME_FACTORY_SLOT",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "L1_CROSS_DOMAIN_MESSENGER_SLOT",
     "outputs": [
       {
@@ -188,32 +201,6 @@
   },
   {
     "inputs": [],
-    "name": "eip1559Denominator",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "eip1559Elasticity",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "gasLimit",
     "outputs": [
       {
@@ -227,39 +214,17 @@
   },
   {
     "inputs": [],
-    "name": "getAddresses",
+    "name": "gasPayingToken",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "l1CrossDomainMessenger",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "l1ERC721Bridge",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "l1StandardBridge",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "optimismPortal",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "optimismMintableERC20Factory",
-            "type": "address"
-          }
-        ],
-        "internalType": "struct SystemConfig.Addresses",
-        "name": "",
-        "type": "tuple"
+        "internalType": "address",
+        "name": "addr_",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "decimals_",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -267,12 +232,25 @@
   },
   {
     "inputs": [],
-    "name": "initVersion",
+    "name": "gasPayingTokenName",
     "outputs": [
       {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
+        "internalType": "string",
+        "name": "name_",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "gasPayingTokenSymbol",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "symbol_",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -371,6 +349,11 @@
           },
           {
             "internalType": "address",
+            "name": "disputeGameFactory",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "optimismPortal",
             "type": "address"
           },
@@ -378,21 +361,34 @@
             "internalType": "address",
             "name": "optimismMintableERC20Factory",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "gasPayingToken",
+            "type": "address"
           }
         ],
         "internalType": "struct SystemConfig.Addresses",
         "name": "_addresses",
         "type": "tuple"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_l2ChainId",
-        "type": "uint256"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isCustomGasToken",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -436,19 +432,6 @@
   },
   {
     "inputs": [],
-    "name": "l2ChainId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "maximumGasLimit",
     "outputs": [
       {
@@ -468,32 +451,6 @@
         "internalType": "uint64",
         "name": "",
         "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "operatorFeeConstant",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "operatorFeeScalar",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -632,24 +589,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint32",
-        "name": "_denominator",
-        "type": "uint32"
-      },
-      {
-        "internalType": "uint32",
-        "name": "_elasticity",
-        "type": "uint32"
-      }
-    ],
-    "name": "setEIP1559Params",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "_overhead",
         "type": "uint256"
@@ -692,24 +631,6 @@
       }
     ],
     "name": "setGasLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_operatorFeeScalar",
-        "type": "uint32"
-      },
-      {
-        "internalType": "uint64",
-        "name": "_operatorFeeConstant",
-        "type": "uint64"
-      }
-    ],
-    "name": "setOperatorFeeScalars",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -764,19 +685,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_l2ChainId",
-        "type": "uint256"
-      }
-    ],
-    "name": "upgrade",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -848,10 +756,5 @@
     ],
     "name": "OwnershipTransferred",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "ReinitializableBase_ZeroInitVersion",
-    "type": "error"
   }
 ]

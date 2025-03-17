@@ -23,8 +23,8 @@
   {
     "inputs": [
       {
-        "internalType": "contract IAnchorStateRegistry",
-        "name": "_anchorStateRegistry",
+        "internalType": "contract IOptimismPortal2",
+        "name": "_portal",
         "type": "address"
       },
       {
@@ -74,8 +74,26 @@
   {
     "inputs": [
       {
-        "internalType": "contract IAnchorStateRegistry",
-        "name": "_anchorStateRegistry",
+        "internalType": "contract AnchorStateRegistry",
+        "name": "_registry",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IFaultDisputeGame",
+        "name": "_game",
+        "type": "address"
+      }
+    ],
+    "name": "setAnchorState",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IOptimismPortal2",
+        "name": "_portal",
         "type": "address"
       },
       {
@@ -105,19 +123,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IAnchorStateRegistry",
-        "name": "_anchorStateRegistry",
-        "type": "address"
-      }
-    ],
-    "name": "updateRetirementTimestamp",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -182,19 +187,6 @@
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "Timestamp",
-        "name": "updatedAt",
-        "type": "uint64"
-      }
-    ],
-    "name": "RetirementTimestampUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
     "inputs": [],
     "name": "Unpaused",
     "type": "event"
@@ -207,12 +199,12 @@
         "type": "string"
       }
     ],
-    "name": "DeputyGuardianModule_ExecutionFailed",
+    "name": "ExecutionFailed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "DeputyGuardianModule_Unauthorized",
+    "name": "Unauthorized",
     "type": "error"
   }
 ]

@@ -5,14 +5,19 @@ pragma solidity 0.8.15;
 import { GnosisSafe as Safe } from "safe-contracts/GnosisSafe.sol";
 import { Enum } from "safe-contracts/common/Enum.sol";
 
+// Contracts
+import { AnchorStateRegistry } from "src/dispute/AnchorStateRegistry.sol";
+
 // Libraries
-import { GameType, Timestamp } from "src/dispute/lib/Types.sol";
+import { Unauthorized } from "src/libraries/PortalErrors.sol";
+import "src/dispute/lib/Types.sol";
 
 // Interfaces
-import { IAnchorStateRegistry } from "interfaces/dispute/IAnchorStateRegistry.sol";
-import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
-import { IDisputeGame } from "interfaces/dispute/IDisputeGame.sol";
-import { ISemver } from "interfaces/universal/ISemver.sol";
+import { IFaultDisputeGame } from "src/dispute/interfaces/IFaultDisputeGame.sol";
+import { ISuperchainConfig } from "src/L1/interfaces/ISuperchainConfig.sol";
+import { IOptimismPortal2 } from "src/L1/interfaces/IOptimismPortal2.sol";
+import { IDisputeGame } from "src/dispute/interfaces/IDisputeGame.sol";
+import { ISemver } from "src/universal/interfaces/ISemver.sol";
 
 /// @title DeputyGuardianModule
 /// @notice This module is intended to be enabled on the Security Council Safe, which will own the Guardian role in the
@@ -21,10 +26,7 @@ import { ISemver } from "interfaces/universal/ISemver.sol";
 ///         authorization at any time by disabling this module.
 contract DeputyGuardianModule is ISemver {
     /// @notice Error message for failed transaction execution
-    error DeputyGuardianModule_ExecutionFailed(string);
-
-    /// @notice Thrown when the caller is not the deputy guardian.
-    error DeputyGuardianModule_Unauthorized();
+    error ExecutionFailed(string);
 
     /// @notice Emitted when the SuperchainConfig is paused
     event Paused(string identifier);
@@ -38,9 +40,6 @@ contract DeputyGuardianModule is ISemver {
     /// @notice Emitted when the respected game type is set
     event RespectedGameTypeSet(GameType indexed gameType, Timestamp indexed updatedAt);
 
-    /// @notice Emitted when the retirement timestamp is updated
-    event RetirementTimestampUpdated(Timestamp indexed updatedAt);
-
     /// @notice The Safe contract instance
     Safe internal immutable SAFE;
 
@@ -51,8 +50,8 @@ contract DeputyGuardianModule is ISemver {
     address internal immutable DEPUTY_GUARDIAN;
 
     /// @notice Semantic version.
-    /// @custom:semver 3.0.0
-    string public constant version = "3.0.0";
+    /// @custom:semver 2.0.1-beta.2
+    string public constant version = "2.0.1-beta.2";
 
     // Constructor to initialize the Safe and baseModule instances
     constructor(Safe _safe, ISuperchainConfig _superchainConfig, address _deputyGuardian) {
@@ -82,7 +81,7 @@ contract DeputyGuardianModule is ISemver {
     /// @notice Internal function to ensure that only the deputy guardian can call certain functions.
     function _onlyDeputyGuardian() internal view {
         if (msg.sender != DEPUTY_GUARDIAN) {
-            revert DeputyGuardianModule_Unauthorized();
+            revert Unauthorized();
         }
     }
 
@@ -96,7 +95,7 @@ contract DeputyGuardianModule is ISemver {
         (bool success, bytes memory returnData) =
             SAFE.execTransactionFromModuleReturnData(address(SUPERCHAIN_CONFIG), 0, data, Enum.Operation.Call);
         if (!success) {
-            revert DeputyGuardianModule_ExecutionFailed(string(returnData));
+            revert ExecutionFailed(string(returnData));
         }
         emit Paused("Deputy Guardian");
     }
@@ -111,58 +110,58 @@ contract DeputyGuardianModule is ISemver {
         (bool success, bytes memory returnData) =
             SAFE.execTransactionFromModuleReturnData(address(SUPERCHAIN_CONFIG), 0, data, Enum.Operation.Call);
         if (!success) {
-            revert DeputyGuardianModule_ExecutionFailed(string(returnData));
+            revert ExecutionFailed(string(returnData));
         }
         emit Unpaused();
     }
 
     /// @notice Calls the Security Council Safe's `execTransactionFromModuleReturnData()`, with the arguments
-    ///      necessary to call `blacklistDisputeGame()` on the `AnchorStateRegistry` contract.
+    ///      necessary to call `setAnchorState()` on the `AnchorStateRegistry` contract.
     ///      Only the deputy guardian can call this function.
-    /// @param _anchorStateRegistry The `AnchorStateRegistry` contract instance.
-    /// @param _game The `IDisputeGame` contract instance.
-    function blacklistDisputeGame(IAnchorStateRegistry _anchorStateRegistry, IDisputeGame _game) external {
+    /// @param _registry The `AnchorStateRegistry` contract instance.
+    /// @param _game The `IFaultDisputeGame` contract instance.
+    function setAnchorState(AnchorStateRegistry _registry, IFaultDisputeGame _game) external {
         _onlyDeputyGuardian();
 
-        bytes memory data = abi.encodeCall(IAnchorStateRegistry.blacklistDisputeGame, (_game));
+        bytes memory data = abi.encodeCall(AnchorStateRegistry.setAnchorState, (_game));
         (bool success, bytes memory returnData) =
-            SAFE.execTransactionFromModuleReturnData(address(_anchorStateRegistry), 0, data, Enum.Operation.Call);
+            SAFE.execTransactionFromModuleReturnData(address(_registry), 0, data, Enum.Operation.Call);
         if (!success) {
-            revert DeputyGuardianModule_ExecutionFailed(string(returnData));
+            revert ExecutionFailed(string(returnData));
+        }
+    }
+
+    /// @notice Calls the Security Council Safe's `execTransactionFromModuleReturnData()`, with the arguments
+    ///      necessary to call `blacklistDisputeGame()` on the `OptimismPortal2` contract.
+    ///      Only the deputy guardian can call this function.
+    /// @param _portal The `OptimismPortal2` contract instance.
+    /// @param _game The `IDisputeGame` contract instance.
+    function blacklistDisputeGame(IOptimismPortal2 _portal, IDisputeGame _game) external {
+        _onlyDeputyGuardian();
+
+        bytes memory data = abi.encodeCall(IOptimismPortal2.blacklistDisputeGame, (_game));
+        (bool success, bytes memory returnData) =
+            SAFE.execTransactionFromModuleReturnData(address(_portal), 0, data, Enum.Operation.Call);
+        if (!success) {
+            revert ExecutionFailed(string(returnData));
         }
         emit DisputeGameBlacklisted(_game);
     }
 
     /// @notice Calls the Security Council Safe's `execTransactionFromModuleReturnData()`, with the arguments
-    ///      necessary to call `setRespectedGameType()` on the `AnchorStateRegistry` contract.
+    ///      necessary to call `setRespectedGameType()` on the `OptimismPortal2` contract.
     ///      Only the deputy guardian can call this function.
-    /// @param _anchorStateRegistry The `AnchorStateRegistry` contract instance.
+    /// @param _portal The `OptimismPortal2` contract instance.
     /// @param _gameType The `GameType` to set as the respected game type.
-    function setRespectedGameType(IAnchorStateRegistry _anchorStateRegistry, GameType _gameType) external {
+    function setRespectedGameType(IOptimismPortal2 _portal, GameType _gameType) external {
         _onlyDeputyGuardian();
 
-        bytes memory data = abi.encodeCall(IAnchorStateRegistry.setRespectedGameType, (_gameType));
+        bytes memory data = abi.encodeCall(IOptimismPortal2.setRespectedGameType, (_gameType));
         (bool success, bytes memory returnData) =
-            SAFE.execTransactionFromModuleReturnData(address(_anchorStateRegistry), 0, data, Enum.Operation.Call);
+            SAFE.execTransactionFromModuleReturnData(address(_portal), 0, data, Enum.Operation.Call);
         if (!success) {
-            revert DeputyGuardianModule_ExecutionFailed(string(returnData));
+            revert ExecutionFailed(string(returnData));
         }
         emit RespectedGameTypeSet(_gameType, Timestamp.wrap(uint64(block.timestamp)));
-    }
-
-    /// @notice Calls the Security Council Safe's `execTransactionFromModuleReturnData()`, with the arguments
-    ///      necessary to call `updateRetirementTimestamp()` on the `AnchorStateRegistry` contract.
-    ///      Only the deputy guardian can call this function.
-    /// @param _anchorStateRegistry The `AnchorStateRegistry` contract instance.
-    function updateRetirementTimestamp(IAnchorStateRegistry _anchorStateRegistry) external {
-        _onlyDeputyGuardian();
-
-        bytes memory data = abi.encodeCall(IAnchorStateRegistry.updateRetirementTimestamp, ());
-        (bool success, bytes memory returnData) =
-            SAFE.execTransactionFromModuleReturnData(address(_anchorStateRegistry), 0, data, Enum.Operation.Call);
-        if (!success) {
-            revert DeputyGuardianModule_ExecutionFailed(string(returnData));
-        }
-        emit RetirementTimestampUpdated(Timestamp.wrap(uint64(block.timestamp)));
     }
 }
