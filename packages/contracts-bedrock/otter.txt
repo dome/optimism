@@ -1,0 +1,7 @@
+git submodule init
+git submodule update
+envsubst < deploy-config/otter-template.json  > deploy-config/otter.json
+DEPLOYMENT_OUTFILE=deployments/artifact.json DEPLOY_CONFIG_PATH=deploy-config/otter.json forge script scripts/deploy/Deploy.s.sol:Deploy --broadcast --private-key  0x  --rpc-url https://rpc-l1.jibchain.net -vvv
+DEPLOYMENT_OUTFILE=deployments/artifact.json DEPLOY_CONFIG_PATH=deploy-config/otter.json forge script scripts/deploy/Deploy.s.sol:Deploy --private-key  0x  --rpc-url https://rpc-l1.jibchain.net -vvv --resume  --verifier blockscout --verifier-url https://exp.jbcha.in/api   --verify --chain 8899
+CONTRACT_ADDRESSES_PATH=deployments/artifact.json  DEPLOY_CONFIG_PATH=deploy-config/otter.json  STATE_DUMP_PATH=l2/alloc.json forge script scripts/L2Genesis.s.sol:L2Genesis  --sig 'runWithStateDump()' --chain-id 901
+../../op-node/bin/op-node genesis l2 --l1-rpc  https://rpc-l1.jibchain.net   --deploy-config  deploy-config/otter.json --l2-allocs l2/alloc.json  --l1-deployments  deployments/artifact.json --outfile.l2  l2/genesis.json --outfile.rollup   l2/rollup.json
