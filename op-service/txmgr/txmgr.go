@@ -923,7 +923,7 @@ func (m *SimpleTxManager) SuggestGasPriceCaps(ctx context.Context) (*big.Int, *b
 		tip = new(big.Int).Set(minTipCap)
 	}
 	if maxTipCap != nil && tip.Cmp(maxTipCap) > 0 {
-		return nil, nil, nil, fmt.Errorf("tip is too high: %v, cap:%v", tip, maxTipCap)
+		// return nil, nil, nil, fmt.Errorf("tip is too high: %v, cap:%v", tip, maxTipCap)
 	}
 
 	if minBaseFee != nil && baseFee.Cmp(minBaseFee) == -1 {
@@ -931,7 +931,7 @@ func (m *SimpleTxManager) SuggestGasPriceCaps(ctx context.Context) (*big.Int, *b
 		baseFee = new(big.Int).Set(minBaseFee)
 	}
 	if maxBaseFee != nil && baseFee.Cmp(maxBaseFee) > 0 {
-		return nil, nil, nil, fmt.Errorf("baseFee is too high: %v, cap:%v", baseFee, maxBaseFee)
+		// return nil, nil, nil, fmt.Errorf("baseFee is too high: %v, cap:%v", baseFee, maxBaseFee)
 	}
 
 	return tip, baseFee, blobFee, nil
