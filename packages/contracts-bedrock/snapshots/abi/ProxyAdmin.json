@@ -15,7 +15,7 @@
     "name": "addressManager",
     "outputs": [
       {
-        "internalType": "contract IAddressManager",
+        "internalType": "contract AddressManager",
         "name": "",
         "type": "address"
       }
@@ -171,7 +171,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IAddressManager",
+        "internalType": "contract AddressManager",
         "name": "_address",
         "type": "address"
       }

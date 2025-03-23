@@ -32,57 +32,57 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
         "internalType": "bytes",
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       },
       {
         "internalType": "enum Enum.Operation",
-        "name": "_operation",
+        "name": "operation",
         "type": "uint8"
       },
       {
         "internalType": "uint256",
-        "name": "_safeTxGas",
+        "name": "safeTxGas",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_baseGas",
+        "name": "baseGas",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_gasPrice",
+        "name": "gasPrice",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_gasToken",
+        "name": "gasToken",
         "type": "address"
       },
       {
         "internalType": "address payable",
-        "name": "_refundReceiver",
+        "name": "refundReceiver",
         "type": "address"
       },
       {
         "internalType": "bytes",
-        "name": "_signatures",
+        "name": "signatures",
         "type": "bytes"
       },
       {
         "internalType": "address",
-        "name": "_msgSender",
+        "name": "msgSender",
         "type": "address"
       }
     ],
