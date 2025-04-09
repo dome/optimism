@@ -3,20 +3,18 @@ pragma solidity 0.8.15;
 
 import { CommonTest } from "test/setup/CommonTest.sol";
 
+// Libraries
+import { Types } from "src/libraries/Types.sol";
+import { Hashing } from "src/libraries/Hashing.sol";
+
 // Target contract dependencies
-import { IProxy } from "interfaces/universal/IProxy.sol";
+import { Proxy } from "src/universal/Proxy.sol";
 
 // Target contract
-import { ISuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
-
-import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
+import { SuperchainConfig } from "src/L1/SuperchainConfig.sol";
+import { ISuperchainConfig } from "src/L1/interfaces/ISuperchainConfig.sol";
 
 contract SuperchainConfig_Init_Test is CommonTest {
-    function setUp() public virtual override {
-        super.setUp();
-        skipIfForkTest("SuperchainConfig_Init_Test: cannot test initialization on forked network");
-    }
-
     /// @dev Tests that initialization sets the correct values. These are defined in CommonTest.sol.
     function test_initialize_unpaused_succeeds() external view {
         assertFalse(superchainConfig.paused());
@@ -25,23 +23,13 @@ contract SuperchainConfig_Init_Test is CommonTest {
 
     /// @dev Tests that it can be intialized as paused.
     function test_initialize_paused_succeeds() external {
-        IProxy newProxy = IProxy(
-            DeployUtils.create1({
-                _name: "Proxy",
-                _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (alice)))
-            })
-        );
-        ISuperchainConfig newImpl = ISuperchainConfig(
-            DeployUtils.create1({
-                _name: "SuperchainConfig",
-                _args: DeployUtils.encodeConstructor(abi.encodeCall(ISuperchainConfig.__constructor__, ()))
-            })
-        );
+        Proxy newProxy = new Proxy(alice);
+        ISuperchainConfig newImpl = ISuperchainConfig(address(new SuperchainConfig()));
 
         vm.startPrank(alice);
         newProxy.upgradeToAndCall(
             address(newImpl),
-            abi.encodeCall(ISuperchainConfig.initialize, (deploy.cfg().superchainConfigGuardian(), true))
+            abi.encodeWithSelector(ISuperchainConfig.initialize.selector, deploy.cfg().superchainConfigGuardian(), true)
         );
 
         assertTrue(ISuperchainConfig(address(newProxy)).paused());

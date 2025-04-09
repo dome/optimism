@@ -1,12 +1,7 @@
-// SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-// Testing
 import { Test } from "forge-std/Test.sol";
-
-// Contracts
-import { IWETH98 } from "interfaces/universal/IWETH98.sol";
-import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
+import { WETH98 } from "src/dispute/weth/WETH98.sol";
 
 contract WETH98_Test is Test {
     event Approval(address indexed src, address indexed guy, uint256 wad);
@@ -14,17 +9,12 @@ contract WETH98_Test is Test {
     event Deposit(address indexed dst, uint256 wad);
     event Withdrawal(address indexed src, uint256 wad);
 
-    IWETH98 public weth;
+    WETH98 public weth;
     address alice;
     address bob;
 
     function setUp() public {
-        weth = IWETH98(
-            DeployUtils.create1({
-                _name: "WETH98",
-                _args: DeployUtils.encodeConstructor(abi.encodeCall(IWETH98.__constructor__, ()))
-            })
-        );
+        weth = new WETH98();
         alice = makeAddr("alice");
         bob = makeAddr("bob");
         deal(alice, 1 ether);

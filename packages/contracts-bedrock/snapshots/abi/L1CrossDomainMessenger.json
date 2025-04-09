@@ -6,32 +6,6 @@
   },
   {
     "inputs": [],
-    "name": "ENCODING_OVERHEAD",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "FLOOR_CALLDATA_OVERHEAD",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "MESSAGE_VERSION",
     "outputs": [
       {
@@ -100,7 +74,7 @@
     "name": "PORTAL",
     "outputs": [
       {
-        "internalType": "contract IOptimismPortal2",
+        "internalType": "contract IOptimismPortal",
         "name": "",
         "type": "address"
       }
@@ -150,19 +124,6 @@
   {
     "inputs": [],
     "name": "RELAY_RESERVED_GAS",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "TX_BASE_GAS",
     "outputs": [
       {
         "internalType": "uint64",
@@ -224,8 +185,13 @@
         "type": "address"
       },
       {
-        "internalType": "contract IOptimismPortal2",
+        "internalType": "contract IOptimismPortal",
         "name": "_portal",
+        "type": "address"
+      },
+      {
+        "internalType": "contract ISystemConfig",
+        "name": "_systemConfig",
         "type": "address"
       }
     ],
@@ -278,7 +244,7 @@
     "name": "portal",
     "outputs": [
       {
-        "internalType": "contract IOptimismPortal2",
+        "internalType": "contract IOptimismPortal",
         "name": "",
         "type": "address"
       }
@@ -372,6 +338,19 @@
     "outputs": [
       {
         "internalType": "contract ISuperchainConfig",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "systemConfig",
+    "outputs": [
+      {
+        "internalType": "contract ISystemConfig",
         "name": "",
         "type": "address"
       }

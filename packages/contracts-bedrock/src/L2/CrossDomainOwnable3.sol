@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Contracts
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
-// Libraries
 import { Predeploys } from "src/libraries/Predeploys.sol";
-
-// Interfaces
-import { IL2CrossDomainMessenger } from "interfaces/L2/IL2CrossDomainMessenger.sol";
+import { L2CrossDomainMessenger } from "src/L2/L2CrossDomainMessenger.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title CrossDomainOwnable3
 /// @notice This contract extends the OpenZeppelin `Ownable` contract for L2 contracts to be owned
@@ -47,7 +42,7 @@ abstract contract CrossDomainOwnable3 is Ownable {
         if (isLocal) {
             require(owner() == msg.sender, "CrossDomainOwnable3: caller is not the owner");
         } else {
-            IL2CrossDomainMessenger messenger = IL2CrossDomainMessenger(Predeploys.L2_CROSS_DOMAIN_MESSENGER);
+            L2CrossDomainMessenger messenger = L2CrossDomainMessenger(Predeploys.L2_CROSS_DOMAIN_MESSENGER);
 
             require(msg.sender == address(messenger), "CrossDomainOwnable3: caller is not the messenger");
 

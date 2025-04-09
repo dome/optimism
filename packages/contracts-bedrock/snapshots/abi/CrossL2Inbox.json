@@ -1,53 +1,28 @@
 [
   {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "origin",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "blockNumber",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "logIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "chainId",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Identifier",
-        "name": "_id",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "_msgHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "calculateChecksum",
+    "inputs": [],
+    "name": "blockNumber",
     "outputs": [
       {
-        "internalType": "bytes32",
-        "name": "checksum_",
-        "type": "bytes32"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "chainId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -80,7 +55,116 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct Identifier",
+        "internalType": "struct ICrossL2Inbox.Identifier",
+        "name": "_id",
+        "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "_target",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_message",
+        "type": "bytes"
+      }
+    ],
+    "name": "executeMessage",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "interopStart",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "interopStart_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "logIndex",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "origin",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "setInteropStart",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "timestamp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "origin",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumber",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "logIndex",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "chainId",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct ICrossL2Inbox.Identifier",
         "name": "_id",
         "type": "tuple"
       },
@@ -146,7 +230,7 @@
           }
         ],
         "indexed": false,
-        "internalType": "struct Identifier",
+        "internalType": "struct ICrossL2Inbox.Identifier",
         "name": "id",
         "type": "tuple"
       }
@@ -156,12 +240,17 @@
   },
   {
     "inputs": [],
-    "name": "BlockNumberTooHigh",
+    "name": "InteropStartAlreadySet",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "LogIndexTooHigh",
+    "name": "InvalidChainId",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidTimestamp",
     "type": "error"
   },
   {
@@ -171,12 +260,22 @@
   },
   {
     "inputs": [],
-    "name": "NotInAccessList",
+    "name": "NotDepositor",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TimestampTooHigh",
+    "name": "NotEntered",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TargetCallFailed",
     "type": "error"
   }
 ]

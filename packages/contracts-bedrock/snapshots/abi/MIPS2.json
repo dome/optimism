@@ -45,7 +45,7 @@
     "outputs": [
       {
         "internalType": "bytes32",
-        "name": "postState_",
+        "name": "",
         "type": "bytes32"
       }
     ],
@@ -73,11 +73,6 @@
   {
     "inputs": [],
     "name": "InvalidMemoryProof",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidRMWInstruction",
     "type": "error"
   },
   {

@@ -25,7 +25,7 @@
     "label": "addressManager",
     "offset": 0,
     "slot": "3",
-    "type": "contract IAddressManager"
+    "type": "contract AddressManager"
   },
   {
     "bytes": "1",

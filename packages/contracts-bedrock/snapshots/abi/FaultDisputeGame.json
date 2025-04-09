@@ -2,61 +2,54 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "GameType",
-            "name": "gameType",
-            "type": "uint32"
-          },
-          {
-            "internalType": "Claim",
-            "name": "absolutePrestate",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxGameDepth",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "splitDepth",
-            "type": "uint256"
-          },
-          {
-            "internalType": "Duration",
-            "name": "clockExtension",
-            "type": "uint64"
-          },
-          {
-            "internalType": "Duration",
-            "name": "maxClockDuration",
-            "type": "uint64"
-          },
-          {
-            "internalType": "contract IBigStepper",
-            "name": "vm",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IDelayedWETH",
-            "name": "weth",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IAnchorStateRegistry",
-            "name": "anchorStateRegistry",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "l2ChainId",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct FaultDisputeGame.GameConstructorParams",
-        "name": "_params",
-        "type": "tuple"
+        "internalType": "GameType",
+        "name": "_gameType",
+        "type": "uint32"
+      },
+      {
+        "internalType": "Claim",
+        "name": "_absolutePrestate",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxGameDepth",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_splitDepth",
+        "type": "uint256"
+      },
+      {
+        "internalType": "Duration",
+        "name": "_clockExtension",
+        "type": "uint64"
+      },
+      {
+        "internalType": "Duration",
+        "name": "_maxClockDuration",
+        "type": "uint64"
+      },
+      {
+        "internalType": "contract IBigStepper",
+        "name": "_vm",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IDelayedWETH",
+        "name": "_weth",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IAnchorStateRegistry",
+        "name": "_anchorStateRegistry",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_l2ChainId",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -132,19 +125,6 @@
     "name": "attack",
     "outputs": [],
     "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "bondDistributionMode",
-    "outputs": [
-      {
-        "internalType": "enum BondDistributionMode",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -296,13 +276,6 @@
   },
   {
     "inputs": [],
-    "name": "closeGame",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "createdAt",
     "outputs": [
       {
@@ -318,7 +291,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_recipient",
+        "name": "",
         "type": "address"
       }
     ],
@@ -326,7 +299,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "credit_",
+        "name": "",
         "type": "uint256"
       }
     ],
@@ -476,25 +449,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "hasUnlockedCredit",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "initialize",
     "outputs": [],
@@ -568,19 +522,6 @@
   },
   {
     "inputs": [],
-    "name": "l2SequenceNumber",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "l2SequenceNumber_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "maxClockDuration",
     "outputs": [
       {
@@ -631,44 +572,6 @@
     "name": "move",
     "outputs": [],
     "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "normalModeCredit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "refundModeCredit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -818,7 +721,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "l2SequenceNumber",
+        "name": "l2BlockNumber",
         "type": "uint256"
       }
     ],
@@ -913,7 +816,7 @@
         "type": "string"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -931,19 +834,6 @@
   },
   {
     "inputs": [],
-    "name": "wasRespectedGameTypeWhenCreated",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "weth",
     "outputs": [
       {
@@ -954,19 +844,6 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "enum BondDistributionMode",
-        "name": "bondDistributionMode",
-        "type": "uint8"
-      }
-    ],
-    "name": "GameClosed",
-    "type": "event"
   },
   {
     "anonymous": false,
@@ -1078,27 +955,12 @@
   },
   {
     "inputs": [],
-    "name": "GameNotFinalized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "GameNotInProgress",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "GameNotResolved",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "IncorrectBondAmount",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidBondDistributionMode",
     "type": "error"
   },
   {
@@ -1174,11 +1036,6 @@
   {
     "inputs": [],
     "name": "OutOfOrderResolution",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ReservedGameType",
     "type": "error"
   },
   {

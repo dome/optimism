@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-// Contracts
-import { CrossDomainMessenger } from "src/universal/CrossDomainMessenger.sol";
-
-// Libraries
 import { AddressAliasHelper } from "src/vendor/AddressAliasHelper.sol";
 import { Predeploys } from "src/libraries/Predeploys.sol";
-
-// Interfaces
-import { ISemver } from "interfaces/universal/ISemver.sol";
-import { IL2ToL1MessagePasser } from "interfaces/L2/IL2ToL1MessagePasser.sol";
+import { CrossDomainMessenger } from "src/universal/CrossDomainMessenger.sol";
+import { ISemver } from "src/universal/interfaces/ISemver.sol";
+import { L2ToL1MessagePasser } from "src/L2/L2ToL1MessagePasser.sol";
+import { Constants } from "src/libraries/Constants.sol";
+import { L1Block } from "src/L2/L1Block.sol";
+import { Predeploys } from "src/libraries/Predeploys.sol";
 
 /// @custom:proxied true
 /// @custom:predeploy 0x4200000000000000000000000000000000000007
@@ -19,17 +17,17 @@ import { IL2ToL1MessagePasser } from "interfaces/L2/IL2ToL1MessagePasser.sol";
 ///         L2 on the L2 side. Users are generally encouraged to use this contract instead of lower
 ///         level message passing contracts.
 contract L2CrossDomainMessenger is CrossDomainMessenger, ISemver {
-    /// @custom:semver 2.2.0
-    string public constant version = "2.2.0";
+    /// @custom:semver 2.1.1-beta.1
+    string public constant version = "2.1.1-beta.1";
 
     /// @notice Constructs the L2CrossDomainMessenger contract.
-    constructor() {
-        _disableInitializers();
+    constructor() CrossDomainMessenger() {
+        initialize({ _l1CrossDomainMessenger: CrossDomainMessenger(address(0)) });
     }
 
     /// @notice Initializer.
     /// @param _l1CrossDomainMessenger L1CrossDomainMessenger contract on the other network.
-    function initialize(CrossDomainMessenger _l1CrossDomainMessenger) external initializer {
+    function initialize(CrossDomainMessenger _l1CrossDomainMessenger) public initializer {
         __CrossDomainMessenger_init({ _otherMessenger: _l1CrossDomainMessenger });
     }
 
@@ -43,9 +41,14 @@ contract L2CrossDomainMessenger is CrossDomainMessenger, ISemver {
 
     /// @inheritdoc CrossDomainMessenger
     function _sendMessage(address _to, uint64 _gasLimit, uint256 _value, bytes memory _data) internal override {
-        IL2ToL1MessagePasser(payable(Predeploys.L2_TO_L1_MESSAGE_PASSER)).initiateWithdrawal{ value: _value }(
+        L2ToL1MessagePasser(payable(Predeploys.L2_TO_L1_MESSAGE_PASSER)).initiateWithdrawal{ value: _value }(
             _to, _gasLimit, _data
         );
+    }
+
+    /// @inheritdoc CrossDomainMessenger
+    function gasPayingToken() internal view override returns (address addr_, uint8 decimals_) {
+        (addr_, decimals_) = L1Block(Predeploys.L1_BLOCK_ATTRIBUTES).gasPayingToken();
     }
 
     /// @inheritdoc CrossDomainMessenger

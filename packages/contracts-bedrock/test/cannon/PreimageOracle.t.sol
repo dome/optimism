@@ -1,34 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-// Testing
 import { Test, Vm, console2 as console } from "forge-std/Test.sol";
 
-// Scripts
-import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
-
-// Libraries
-import { LibKeccak } from "@lib-keccak/LibKeccak.sol";
+import { PreimageOracle } from "src/cannon/PreimageOracle.sol";
 import { PreimageKeyLib } from "src/cannon/PreimageKeyLib.sol";
+import { LibKeccak } from "@lib-keccak/LibKeccak.sol";
 import { Bytes } from "src/libraries/Bytes.sol";
 import { Process } from "scripts/libraries/Process.sol";
 import "src/cannon/libraries/CannonErrors.sol";
 import "src/cannon/libraries/CannonTypes.sol";
 
-// Interfaces
-import { IPreimageOracle } from "interfaces/cannon/IPreimageOracle.sol";
-
 contract PreimageOracle_Test is Test {
-    IPreimageOracle oracle;
+    PreimageOracle oracle;
 
     /// @notice Sets up the testing suite.
     function setUp() public {
-        oracle = IPreimageOracle(
-            DeployUtils.create1({
-                _name: "PreimageOracle",
-                _args: DeployUtils.encodeConstructor(abi.encodeCall(IPreimageOracle.__constructor__, (0, 0)))
-            })
-        );
+        oracle = new PreimageOracle(0, 0);
         vm.label(address(oracle), "PreimageOracle");
     }
 
@@ -36,11 +24,8 @@ contract PreimageOracle_Test is Test {
     /// @param _challengePeriod The challenge period to test.
     function testFuzz_constructor_challengePeriodTooLarge_reverts(uint256 _challengePeriod) public {
         _challengePeriod = bound(_challengePeriod, uint256(type(uint64).max) + 1, type(uint256).max);
-        vm.expectRevert("PreimageOracle: challenge period too large");
-        DeployUtils.create1({
-            _name: "PreimageOracle",
-            _args: DeployUtils.encodeConstructor(abi.encodeCall(IPreimageOracle.__constructor__, (0, _challengePeriod)))
-        });
+        vm.expectRevert("challenge period too large");
+        new PreimageOracle(0, _challengePeriod);
     }
 
     /// @notice Test the pre-image key computation with a known pre-image.
@@ -321,18 +306,11 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
     uint256 internal constant CHALLENGE_PERIOD = 1 days;
     uint256 internal constant TEST_UUID = 0xFACADE;
 
-    IPreimageOracle internal oracle;
+    PreimageOracle internal oracle;
 
     /// @notice Sets up the testing suite.
     function setUp() public {
-        oracle = IPreimageOracle(
-            DeployUtils.create1({
-                _name: "PreimageOracle",
-                _args: DeployUtils.encodeConstructor(
-                    abi.encodeCall(IPreimageOracle.__constructor__, (MIN_SIZE_BYTES, CHALLENGE_PERIOD))
-                )
-            })
-        );
+        oracle = new PreimageOracle({ _minProposalSize: MIN_SIZE_BYTES, _challengePeriod: CHALLENGE_PERIOD });
         vm.label(address(oracle), "PreimageOracle");
 
         // Set `tx.origin` and `msg.sender` to `address(this)` so that it may behave like an EOA for `addLeavesLPP`.
@@ -358,14 +336,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
     /// @notice Tests that the `initLPP` function reverts when the part offset is out of bounds of the full preimage.
     function test_initLPP_sizeTooSmall_reverts() public {
-        oracle = IPreimageOracle(
-            DeployUtils.create1({
-                _name: "PreimageOracle",
-                _args: DeployUtils.encodeConstructor(
-                    abi.encodeCall(IPreimageOracle.__constructor__, (1000, CHALLENGE_PERIOD))
-                )
-            })
-        );
+        oracle = new PreimageOracle({ _minProposalSize: 1000, _challengePeriod: CHALLENGE_PERIOD });
 
         // Allocate the preimage data.
         bytes memory data = new bytes(136);
@@ -391,7 +362,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
     }
 
     /// @notice Gas snapshot for `addLeaves`
-    function test_addLeaves_gasSnapshot_benchmark() public {
+    function test_addLeaves_gasSnapshot() public {
         // Allocate the preimage data.
         bytes memory data = new bytes(136 * 500);
         for (uint256 i; i < data.length; i++) {
@@ -581,7 +552,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory preProof = new bytes32[](16);
@@ -636,7 +607,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
 
@@ -705,7 +676,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory preProof = new bytes32[](16);
@@ -752,7 +723,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Finalize the proposal.
         vm.expectRevert(ActiveProposal.selector);
@@ -780,7 +751,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Finalize the proposal.
         vm.expectRevert(ActiveProposal.selector);
@@ -813,7 +784,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory preProof = new bytes32[](16);
@@ -859,7 +830,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory preProof = new bytes32[](16);
@@ -911,7 +882,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
             // Construct the leaf preimage data for the blocks added.
             LibKeccak.StateMatrix memory matrixB;
-            IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
+            PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
 
             // Fetch the merkle proofs for the pre/post state leaves in the proposal tree.
             bytes32 canonicalRoot = oracle.getTreeRootLPP(address(this), TEST_UUID);
@@ -978,7 +949,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory p = new bytes32[](16);
@@ -1018,7 +989,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
 
@@ -1058,7 +1029,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
 
@@ -1106,7 +1077,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added and corrupt the state commitments.
         LibKeccak.StateMatrix memory matrixB;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
         for (uint256 i = _lastCorrectLeafIdx + 1; i < leaves.length; i++) {
             leaves[i].stateCommitment = 0;
         }
@@ -1156,7 +1127,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added and corrupt the state commitments.
         LibKeccak.StateMatrix memory matrixB;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrixB, data);
         for (uint256 i = 0; i < leaves.length; i++) {
             leaves[i].stateCommitment = 0;
         }
@@ -1195,7 +1166,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, data);
 
         // Create a proof array with 16 elements.
         bytes32[] memory preProof = new bytes32[](16);
@@ -1247,7 +1218,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
         leaves[2].stateCommitment = stateCommitments[2];
@@ -1301,7 +1272,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
         leaves[2].stateCommitment = stateCommitments[2];
@@ -1355,7 +1326,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
 
         // Construct the leaf preimage data for the blocks added.
         LibKeccak.StateMatrix memory matrix;
-        IPreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
+        PreimageOracle.Leaf[] memory leaves = _generateLeaves(matrix, phonyData);
         leaves[0].stateCommitment = stateCommitments[0];
         leaves[1].stateCommitment = stateCommitments[1];
         leaves[2].stateCommitment = stateCommitments[2];
@@ -1392,7 +1363,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
     }
 
     /// @notice Hashes leaf data for the preimage proposals tree
-    function _hashLeaf(IPreimageOracle.Leaf memory _leaf) internal pure returns (bytes32 leaf_) {
+    function _hashLeaf(PreimageOracle.Leaf memory _leaf) internal pure returns (bytes32 leaf_) {
         leaf_ = keccak256(abi.encodePacked(_leaf.input, _leaf.index, _leaf.stateCommitment));
     }
 
@@ -1403,18 +1374,18 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
     )
         internal
         pure
-        returns (IPreimageOracle.Leaf[] memory leaves_)
+        returns (PreimageOracle.Leaf[] memory leaves_)
     {
         bytes memory data = LibKeccak.padMemory(_data);
         uint256 numCommitments = data.length / LibKeccak.BLOCK_SIZE_BYTES;
 
-        leaves_ = new IPreimageOracle.Leaf[](numCommitments);
+        leaves_ = new PreimageOracle.Leaf[](numCommitments);
         for (uint256 i = 0; i < numCommitments; i++) {
             bytes memory blockSlice = Bytes.slice(data, i * LibKeccak.BLOCK_SIZE_BYTES, LibKeccak.BLOCK_SIZE_BYTES);
             LibKeccak.absorb(_stateMatrix, blockSlice);
             LibKeccak.permutation(_stateMatrix);
 
-            leaves_[i] = IPreimageOracle.Leaf({
+            leaves_[i] = PreimageOracle.Leaf({
                 input: blockSlice,
                 index: uint32(i),
                 stateCommitment: keccak256(abi.encode(_stateMatrix))
@@ -1466,7 +1437,7 @@ contract PreimageOracle_LargePreimageProposals_Test is Test {
     ///         constructed with `_leaves`.
     function _generateProof(
         uint256 _leafIdx,
-        IPreimageOracle.Leaf[] memory _leaves
+        PreimageOracle.Leaf[] memory _leaves
     )
         internal
         returns (bytes32 root_, bytes32[] memory proof_)

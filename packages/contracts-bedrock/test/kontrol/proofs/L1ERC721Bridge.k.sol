@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import { DeploymentSummaryFaultProofs } from "./utils/DeploymentSummaryFaultProofs.sol";
+import { DeploymentSummary } from "./utils/DeploymentSummary.sol";
 import { KontrolUtils } from "./utils/KontrolUtils.sol";
-import { IL1ERC721Bridge as L1ERC721Bridge } from "interfaces/L1/IL1ERC721Bridge.sol";
-import { ISuperchainConfig as SuperchainConfig } from "interfaces/L1/ISuperchainConfig.sol";
-import { ICrossDomainMessenger as CrossDomainMessenger } from "interfaces/universal/ICrossDomainMessenger.sol";
+import { Types } from "src/libraries/Types.sol";
+import {
+    IL1ERC721Bridge as L1ERC721Bridge,
+    IL1CrossDomainMessenger as CrossDomainMessenger,
+    ISuperchainConfig as SuperchainConfig
+} from "./interfaces/KontrolInterfaces.sol";
 
-contract L1ERC721BridgeKontrol is DeploymentSummaryFaultProofs, KontrolUtils {
+contract L1ERC721BridgeKontrol is DeploymentSummary, KontrolUtils {
     L1ERC721Bridge l1ERC721Bridge;
     SuperchainConfig superchainConfig;
 
@@ -34,7 +37,7 @@ contract L1ERC721BridgeKontrol is DeploymentSummaryFaultProofs, KontrolUtils {
 
         vm.mockCall(
             address(l1ERC721Bridge.messenger()),
-            abi.encodeCall(CrossDomainMessenger.xDomainMessageSender, ()),
+            abi.encodeWithSelector(CrossDomainMessenger.xDomainMessageSender.selector),
             abi.encode(address(l1ERC721Bridge.otherBridge()))
         );
 
