@@ -479,6 +479,8 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 			LocalUnsafe: d.ec.UnsafeL2Head(),
 		})
 		d.emitter.Emit(FinalizedUpdateEvent(x))
+		d.ec.SetLocalSafeHead(x.Ref)
+		d.ec.SetSafeHead(x.Ref)
 	case RequestCrossUnsafeEvent:
 		d.emitter.Emit(CrossUnsafeUpdateEvent{
 			CrossUnsafe: d.ec.CrossUnsafeL2Head(),
