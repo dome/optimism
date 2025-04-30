@@ -471,6 +471,7 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 		// Try to apply the forkchoice changes
 		d.emitter.Emit(TryUpdateEngineEvent{})
 	case PromoteCrossUnsafeEvent:
+		d.log.Debug("Updating cross unsafe", "block", x.Ref, "unsafe", d.ec.UnsafeL2Head())
 		d.ec.SetCrossUnsafeHead(x.Ref)
 		d.emitter.Emit(CrossUnsafeUpdateEvent{
 			CrossUnsafe: x.Ref,
@@ -509,7 +510,7 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 			})
 		}
 	case PromoteLocalSafeEvent:
-		d.log.Debug("Updating local safe", "local_safe", x.Ref, "safe", d.ec.SafeL2Head(), "unsafe", d.ec.UnsafeL2Head())
+		d.log.Debug("Updating local safe & fake finalized", "local_safe", x.Ref, "safe", d.ec.SafeL2Head(), "unsafe", d.ec.UnsafeL2Head())
 		d.ec.SetLocalSafeHead(x.Ref)
 		d.ec.SetFinalizedHead(x.Ref)
 		d.emitter.Emit(LocalSafeUpdateEvent(x))
