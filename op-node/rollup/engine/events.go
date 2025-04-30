@@ -473,10 +473,12 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 	case PromoteCrossUnsafeEvent:
 		d.log.Debug("Updating cross unsafe", "block", x.Ref, "unsafe", d.ec.UnsafeL2Head())
 		d.ec.SetCrossUnsafeHead(x.Ref)
+		d.ec.SetFinalizedHead(x.Ref)
 		d.emitter.Emit(CrossUnsafeUpdateEvent{
 			CrossUnsafe: x.Ref,
 			LocalUnsafe: d.ec.UnsafeL2Head(),
 		})
+		d.emitter.Emit(FinalizedUpdateEvent(x))
 	case RequestCrossUnsafeEvent:
 		d.emitter.Emit(CrossUnsafeUpdateEvent{
 			CrossUnsafe: d.ec.CrossUnsafeL2Head(),
