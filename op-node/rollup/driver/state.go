@@ -262,8 +262,6 @@ func (s *Driver) eventLoop() {
 			reqStep() // a new L1 head may mean we have the data to not get an EOF again.
 		case newL1Safe := <-s.l1SafeSig:
 			s.Emitter.Emit(status.L1SafeEvent{L1Safe: newL1Safe})
-			s.emitter.Emit(finality.FinalizeL1Event{FinalizedL1: newL1Safe})
-			reqStep() // we may be able to mark more L2 data as finalized now
 			// no step, justified L1 information does not do anything for L2 derivation or status
 		case newL1Finalized := <-s.l1FinalizedSig:
 			s.emitter.Emit(finality.FinalizeL1Event{FinalizedL1: newL1Finalized})

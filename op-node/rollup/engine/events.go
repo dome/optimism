@@ -509,9 +509,8 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 			})
 		}
 	case PromoteLocalSafeEvent:
-		d.log.Debug("Updating local safe & fake finalized", "local_safe", x.Ref, "safe", d.ec.SafeL2Head(), "unsafe", d.ec.UnsafeL2Head())
+		d.log.Debug("Updating local safe", "local_safe", x.Ref, "safe", d.ec.SafeL2Head(), "unsafe", d.ec.UnsafeL2Head())
 		d.ec.SetLocalSafeHead(x.Ref)
-		d.ec.SetFinalizedHead(x.Ref)
 		d.emitter.Emit(LocalSafeUpdateEvent(x))
 	case LocalSafeUpdateEvent:
 		// pre-interop everything that is local-safe is also immediately cross-safe.
