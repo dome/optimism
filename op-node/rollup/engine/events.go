@@ -534,6 +534,7 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 				LocalUnsafe: d.ec.UnsafeL2Head(),
 			})
 		}
+		d.ec.SetFinalizedHead(x.Ref)
 		// Try to apply the forkchoice changes
 		d.emitter.Emit(TryUpdateEngineEvent{})
 	case PromoteFinalizedEvent:
