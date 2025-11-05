@@ -23,7 +23,8 @@ cache
 !op-deployer/pkg/deployer/artifacts
 
 
-packages/contracts-bedrock/deployments/anvil
+packages/contracts-bedrock/deployments/*
+!packages/contracts-bedrock/deployments/anvil
 
 # vim
 *.sw*
